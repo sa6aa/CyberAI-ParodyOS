@@ -1,0 +1,390 @@
+import base64
+import io
+import zipfile
+
+def create_html_content():
+    """
+    يُعيد نص ملف HTML محسَّن.
+    يشمل:
+      - بحث فوري عن الأيقونات.
+      - زر تفعيل/إيقاف الوضع الداكن.
+      - تحسين إشعارات النسخ (Toasts).
+      - مثال لكيفية ترتيب وتنظيم العناصر.
+    """
+    return """<!doctype html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <meta name="google" content="notranslate" />
+    <title>Material Design Icons - Improved Cheatsheet</title>
+    <style>
+        * {
+            margin: 0; padding: 0;
+        }
+        body {
+            background: #fff;
+            color: #222;
+            margin: 0; padding: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-theme {
+            background: #121212;
+            color: #fff;
+        }
+        h1, h2, h3, p, div, blockquote, footer {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+        h1 {
+            padding: 20px 20px 16px 20px;
+            font-size: 26px;
+            line-height: 26px;
+            font-weight: normal;
+            color: #FFF;
+            background-color: #2196F3;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        h1 span.title-text {
+            display: inline-flex; align-items: center;
+        }
+        h1 span.title-text svg {
+            width: 26px;
+            height: 26px;
+            margin-right: 8px;
+        }
+        h1 span.title-text svg path {
+            fill: #FFF;
+        }
+        button.toggle-dark {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 5px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button.toggle-dark:hover {
+            background: #fff;
+            color: #2196F3;
+        }
+        /* حقل البحث */
+        #searchField {
+            margin: 10px 20px;
+            padding: 8px;
+            width: calc(100% - 60px);
+            border: 1px solid #DDD;
+            border-radius: 4px;
+        }
+        /* قسام الاستخدام */
+        .usage-list {
+            list-style: square;
+            padding-left: 3rem;
+            line-height: 1.25rem;
+        }
+        .icons {
+            padding: 0 20px 10px 20px;
+            -webkit-column-count: 5;
+               -moz-column-count: 5;
+                    column-count: 5;
+            -webkit-column-gap: 20px;
+               -moz-column-gap: 20px;
+                    column-gap: 20px;
+        }
+        .icons div {
+            line-height: 2em;
+            white-space: nowrap;
+            position: relative;
+        }
+        .icons div span {
+            cursor: pointer;
+            font-size: 14px;
+            text-overflow: ellipsis;
+            display: inline-block;
+            max-width: calc(100% - 90px);
+            overflow: hidden;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .icons div span:hover {
+            text-decoration: underline;
+        }
+        .icons div code {
+            border: 1px solid #DDD;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+            cursor: pointer;
+            margin-right: 4px;
+            padding: 2px 6px;
+            font-family: Consolas, monospace;
+        }
+        .icons div code.hex {
+            width: 46px;
+            text-align: center;
+        }
+        .icons div code.unicode {
+            background: #DDD;
+            font-weight: bold;
+        }
+        .icons div code.unicode:hover {
+            background: #3c90be;
+            color: #fff;
+            border-color: #3c90be;
+        }
+        .icons div code.hex:hover,
+        .icons div svg:hover {
+            border-color: #3c90be;
+        }
+        /* أيقونة svg الافتراضية */
+        .icons div svg {
+            display: inline-block;
+            width: 32px;
+            height: 24px;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            line-height: 24px;
+        }
+        /* قسم الأيقونات الجديدة */
+        h2.newicons span::before {
+            content: ' ';
+            width: 100%;
+            height: 0.2rem;
+            bottom: -0.25rem;
+            background: #3C90BE;
+            border-radius: 0.1rem;
+            position: absolute;
+        }
+        /* قسم الأيقونات الموقوفة */
+        h2.deprecatedicons span::before {
+            content: ' ';
+            width: 100%;
+            height: 0.2rem;
+            bottom: -0.25rem;
+            background: #BE3C3C;
+            border-radius: 0.1rem;
+            position: absolute;
+        }
+        /* توست للتنبيهات */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.5s ease;
+            opacity: 1;
+            z-index: 9999;
+        }
+        footer {
+            padding: 20px;
+            border-top: 1px solid #DDD;
+            display: flex;
+            justify-content: space-between;
+            background: #F1F1F1;
+            color: #666;
+        }
+        footer a {
+            color: #e91e63;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+      <span class="title-text">
+        <svg viewBox="0 0 24 24">
+          <path d="M0,0H8V3H18V0H26V8H23V18H26V26H18V23H8V21H18V18H21V8H18V5H8V8H5V18H8V26H0V18H3V8H0V0Z" />
+        </svg>
+        Material Design Icons - Cheatsheet
+      </span>
+      <button class="toggle-dark" onclick="toggleDarkMode()">تبديل الوضع الداكن</button>
+    </h1>
+
+    <h2 class="usage">Cheatsheet Usage</h2>
+    <ul class="usage-list">
+        <li>انقر على الأيقونة لنسخ الـSVG.</li>
+        <li>انقر على <code>U</code> لنسخ الحرف نفسه.</li>
+        <li>انقر على القيمة الست عشرية (hex) لنسخ رمز اليونيكود.</li>
+        <li>انقر على اسم الأيقونة لنسخ اسمها.</li>
+    </ul>
+
+    <input
+       type="text"
+       id="searchField"
+       placeholder="اكتب للبحث عن أيقونة..."
+    />
+
+    <h2>جميع الأيقونات <small id="iconsCount">-</small></h2>
+    <div class="icons" id="icons"></div>
+
+    <h2 class="newicons" id="newIconsHeader"><span>New</span> Icons <small id="newIconsCount">-</small></h2>
+    <div class="icons" id="newIcons"></div>
+
+    <h2 class="deprecatedicons"><span>Deprecated</span> Icons <small id="deprecatedIconsCount">-</small></h2>
+    <p class="deprecated" id="deprecated">
+        Deprecated icons will be removed in a future major release.
+    </p>
+    <div class="icons" id="deprecatedIcons"></div>
+
+    <footer>
+        <div>
+            Generated with <a href="https://npmjs.com/package/@mdi/font-build">@mdi/font-build</a>
+            by <a href="http://MaterialDesignIcons.com/" target="_blank">MaterialDesignIcons.com</a>.
+        </div>
+        <div>
+            <a href="https://www.npmjs.com/org/mdi" target="_blank">NPM @mdi Organization</a>
+        </div>
+    </footer>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 1500);
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 2000);
+        }
+
+        function copyText(text) {
+            const copyFrom = document.createElement('textarea');
+            copyFrom.style.position = 'fixed';
+            copyFrom.style.opacity = '0';
+            copyFrom.value = text;
+            document.body.appendChild(copyFrom);
+            copyFrom.select();
+            document.execCommand('copy');
+            document.body.removeChild(copyFrom);
+            showToast('Copied to Clipboard');
+        }
+
+        // مثال صغير للبيانات:
+        // استبدل هذا الجزء ببياناتك أو تابع تحميلها كما هو الحال في السكربت الأصلي.
+        const exampleIcons = [
+            { name: "account", data: "M12,4A4,4 0 0,1 16,8...", hex: "F0004", version: "1.5.54" },
+            { name: "access-point", data: "M4.93,4.93C3.12,6.74 2,9...", hex: "F0003", version: "1.5.54" }
+        ];
+
+        function loadIcons() {
+            const iconsContainer = document.getElementById('icons');
+            exampleIcons.forEach(icon => {
+                const iconDiv = createIconElement(icon, false, false);
+                iconsContainer.appendChild(iconDiv);
+            });
+
+            // لتعداد الأيقونات
+            document.getElementById('iconsCount').textContent = exampleIcons.length;
+            document.getElementById('newIconsCount').textContent = 0;
+            document.getElementById('deprecatedIconsCount').textContent = 0;
+        }
+
+        function createIconElement(icon, isNewIcon, isDeprecatedIcon) {
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const div = document.createElement('div');
+            if (isNewIcon) div.classList.add('new');
+            if (isDeprecatedIcon) div.classList.add('deprecated');
+
+            // أنشئ عنصر SVG
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            const path = document.createElementNS(svgNS, 'path');
+            path.setAttribute('d', icon.data);
+            svg.appendChild(path);
+
+            // أضف الـunicode
+            const unicodeCode = document.createElement('code');
+            unicodeCode.className = 'unicode';
+            unicodeCode.textContent = icon.hex;
+            unicodeCode.onclick = () => copyText(String.fromCodePoint(parseInt(icon.hex, 16)));
+
+            // أضف الـhex
+            const hexCode = document.createElement('code');
+            hexCode.className = 'hex';
+            hexCode.textContent = icon.hex;
+            hexCode.onclick = () => copyText(icon.hex);
+
+            // اسم الأيقونة
+            const span = document.createElement('span');
+            span.textContent = icon.name;
+            span.onclick = () => copyText(icon.name);
+
+            // أحداث النسخ
+            svg.onclick = () => {
+                const svgContent = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24"><path d="${icon.data}"/></svg>`;
+                copyText(svgContent);
+            };
+
+            // تعبئة div
+            div.appendChild(svg);
+            div.appendChild(unicodeCode);
+            div.appendChild(hexCode);
+            div.appendChild(span);
+
+            return div;
+        }
+
+        // خاصية البحث الفوري
+        document.getElementById('searchField').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const iconDivs = document.querySelectorAll('#icons div, #newIcons div, #deprecatedIcons div');
+            iconDivs.forEach(div => {
+                const iconName = div.querySelector('span')?.textContent.toLowerCase() || '';
+                if (iconName.includes(query)) {
+                    div.style.display = '';
+                } else {
+                    div.style.display = 'none';
+                }
+            });
+        });
+
+        // عند تحميل الصفحة
+        window.onload = () => {
+            loadIcons(); // قم باستدعاء الدالة لعرض الأيقونات
+        };
+    </script>
+</body>
+</html>
+"""
+
+def create_zip_base64():
+    """
+    ينشئ ملف ZIP في الذاكرة ويحوي ملف index.html بالمحتوى المعاد من create_html_content().
+    ثم يعيده كنص Base64 جاهز للنسخ واللصق.
+    """
+    html_content = create_html_content()
+
+    # أنشئ ملف ZIP في الذاكرة
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('index.html', html_content)
+
+    # احصل على البايتات الخاصة بالملف المضغوط
+    zip_bytes = zip_buffer.getvalue()
+
+    # حولها إلى Base64
+    encoded = base64.b64encode(zip_bytes).decode('utf-8')
+    return encoded
+
+if __name__ == "__main__":
+    zip_base64 = create_zip_base64()
+    print(zip_base64)
+   
